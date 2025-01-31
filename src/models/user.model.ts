@@ -53,6 +53,8 @@ UserSchema.pre("save", function (next) {
 
     user.password = encrypt(user.password);
 
+    user.activationCode = encrypt(user.id);
+
     next();
 })
 
