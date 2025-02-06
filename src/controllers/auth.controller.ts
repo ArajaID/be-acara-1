@@ -5,8 +5,8 @@ import * as Yup from 'yup';
 import UserModel from '../models/user.model';
 import { encrypt } from '../utils/encryption';
 import { generateToken } from '../utils/jwt';
-import { IReqUser } from '../middlewares/auth.middleware';
-import { isAccessor } from 'typescript';
+import { IReqUser } from '../utils/interfaces';
+import response from '../utils/response';
 
 type TRegister = {
     fullName: string;
@@ -72,16 +72,9 @@ export default {
                 password
             })
 
-            return res.status(200).json({ 
-                message: 'User registered successfully',
-                data: result
-            })
+            return response.success(res, result, "user registered successfully")
         } catch (error) {
-           const err = error as unknown as Error;
-              return res.status(400).json({ 
-                message: err.message,
-                data: null
-              })
+            response.error(res, error, "failed registration")
         }
     },
 
@@ -96,7 +89,6 @@ export default {
         const { identifier, password } = req.body as unknown as TLogin;
 
         try {
-            
             // ambil data user berdasarakan identifier (username atau email)
             const userByIdentifier = await UserModel.findOne({ 
                 $or: [
@@ -107,19 +99,13 @@ export default {
             })
 
             if(!userByIdentifier) { 
-                return res.status(403).json({ 
-                    message: 'User not found',
-                    data: null
-                })
+                return response.unauthorized(res, 'user not found')
             }
             // validasi password
             const validatePassword: boolean = encrypt(password) === userByIdentifier.password;
 
             if(!validatePassword) {
-                return res.status(403).json({ 
-                    message: 'Password not matched',
-                    data: null
-                })
+                return response.unauthorized(res, 'password not matche')
             }
 
             const token = generateToken({
@@ -127,17 +113,9 @@ export default {
                 role: userByIdentifier.role
             })
 
-            res.status(200).json({ 
-                message: 'Login Success',
-                data: token
-            })
-            
+           response.success(res, token, 'login success')   
         } catch (error) {
-            const err = error as unknown as Error;
-              return res.status(400).json({ 
-                message: err.message,
-                data: null
-              })
+           response.error(res, error, 'login failed')
         }
     },
 
@@ -152,17 +130,9 @@ export default {
             const user = req.user;
             const result = await UserModel.findById(user?.id);
 
-            res.status(200).json({ 
-                message: 'Success User Profile',
-                data: result
-            })
-
+            response.success(res, result, 'success get data profile')
         } catch (error) {
-            const err = error as unknown as Error;
-            return res.status(400).json({ 
-              message: err.message,
-              data: null
-            }) 
+            response.error(res, error, 'failed get data profile')
         }
     },
 
@@ -189,18 +159,9 @@ export default {
                 }
             );
 
-            res.status(200).json({ 
-                message: 'Activation success',
-                data: user
-            });
-            
+            response.success(res, user, 'activation success')   
         } catch (error) {
-            const err = error as unknown as Error;
-            return res.status(400).json({ 
-              message: err.message,
-              data: null
-            }) 
+            response.error(res, error, 'activation failed')
         }
     },
-
 }
