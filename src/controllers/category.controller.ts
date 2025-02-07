@@ -17,13 +17,12 @@ export default {
         }
     },
     async findAll(req: IReqUser, res: Response) { 
-        const { 
+        try {
+         const { 
             page = 1, 
             limit = 10, 
             search 
-        } = req.query as unknown as IPaginationQuery;
-
-        try {
+         } = req.query as unknown as IPaginationQuery;
            
          const query = {};
 
@@ -85,7 +84,9 @@ export default {
         try {
             const { id } = req.params;
 
-            const result = await CategoryModel.findByIdAndDelete(id);
+            const result = await CategoryModel.findByIdAndDelete(id, {
+                new: true
+            });
 
             response.success(res, result, 'success remove category')
         } catch (error) {
