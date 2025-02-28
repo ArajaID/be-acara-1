@@ -58,6 +58,10 @@ export default {
 
             const result = await BannerModel.findById(id);
 
+            if(!result) {
+                return response.notFound(res, 'failed find one a banner');
+            }
+
             response.success(res, result, 'success find one banner')
         } catch (error) {
             response.error(res, error, 'failed find one banner')
