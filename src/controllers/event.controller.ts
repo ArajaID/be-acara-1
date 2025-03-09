@@ -1,13 +1,13 @@
 import { Response } from "express";
 import { IPaginationQuery, IReqUser } from "../utils/interfaces";
-import EventModel, { eventDAO, TEvent } from "../models/event.model";
+import EventModel, { eventDAO, TypeEvent } from "../models/event.model";
 import response from "../utils/response";
 import { FilterQuery, isValidObjectId } from "mongoose";
 
 export default {
     async create(req: IReqUser, res: Response) {
         try {
-            const payload = {...req.body, createdBy: req.user?.id} as TEvent;
+            const payload = {...req.body, createdBy: req.user?.id} as TypeEvent;
             await eventDAO.validate(payload);
             const result = await EventModel.create(payload)
 
@@ -18,35 +18,49 @@ export default {
     },
     async findAll(req: IReqUser, res: Response) {
         try {
-            const { 
-                page = 1, 
-                limit = 10, 
-                search 
-            } = req.query as unknown as IPaginationQuery;
-           
-            const query: FilterQuery<TEvent> = {};
+            const buildQuery = (filter: any) => {
+                let query: FilterQuery<TypeEvent> = {};
 
-            if(search) {
-                Object.assign(query, {
-                    ...query,
-                    $text: {
-                        $search: search,
-                    },
-                });
+                if(filter.search) query.$text = { $search: filter.search };
+                if(filter.category) query.category = filter.category;
+                if(filter.isPublish) query.isPublish = filter.isPublish;
+                if(filter.isFeatured) query.isFeatured = filter.isFeatured;
+                if(filter.isOnline) query.isOnline = filter.isOnline;
+
+                return query;
             }
+            
+            const {
+                limit = 10,
+                page = 1,
+                search,
+                category,
+                isOnline,
+                isFeatured,
+                isPublish, 
+            } = req.query;
+
+            const query = buildQuery({
+                search,
+                category,
+                isPublish,
+                isFeatured,
+                isOnline,
+            });
 
             const result = await EventModel.find(query)
-                .limit(limit)
-                .skip((page - 1) * limit)
+                .limit(+limit)
+                .skip((+page - 1) * +limit)
                 .sort({createdAt: -1})
+                .lean()
                 .exec();
 
             const count = await EventModel.countDocuments(query);
 
             response.pagination(res, result, {
                 total: count,
-                totalPages: Math.ceil(count / limit),
-                current: page
+                totalPages: Math.ceil(count / +limit),
+                current: +page
             }, 'success find all event')
         } catch (error) {
             response.error(res, error, 'failed find all event')
