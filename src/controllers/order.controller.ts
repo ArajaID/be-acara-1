@@ -150,4 +150,12 @@ export default {
             response.error(res, error, 'failed to cancelled an order')
         }
     },
+
+    async remove(req: IReqUser, res: Response) {
+        try {
+          
+        } catch (error) {
+            response.error(res, error, 'failed to delete an order')
+        }
+    }
 }

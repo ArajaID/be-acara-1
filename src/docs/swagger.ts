@@ -75,6 +75,11 @@ const doc = {
                 description: "",
                 quantity: 0
             },
+            CreateOrderRequest: {
+                events: "event object id",
+                ticket: "ticket object id",
+                quantity: 1,
+            },
         }
     },
 }
