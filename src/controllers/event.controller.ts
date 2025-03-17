@@ -1,14 +1,15 @@
 import { Response } from "express";
-import { IPaginationQuery, IReqUser } from "../utils/interfaces";
-import EventModel, { eventDAO, TypeEvent } from "../models/event.model";
+import { IReqUser } from "../utils/interfaces";
+import EventModel, { eventDTO, TypeEvent } from "../models/event.model";
 import response from "../utils/response";
 import { FilterQuery, isValidObjectId } from "mongoose";
+import uploader from "../utils/uploader";
 
 export default {
     async create(req: IReqUser, res: Response) {
         try {
             const payload = {...req.body, createdBy: req.user?.id} as TypeEvent;
-            await eventDAO.validate(payload);
+            await eventDTO.validate(payload);
             const result = await EventModel.create(payload)
 
             response.success(res, result, 'success create a event')
@@ -97,6 +98,8 @@ export default {
                 new: true
             });
 
+            if (!result) return response.notFound(res, "event not found");
+
             response.success(res, result, 'success update event')
         } catch (error) {
             response.error(res, error, 'failed update event')
@@ -114,6 +117,10 @@ export default {
                 new: true
             });
 
+            if (!result) return response.notFound(res, "event not found");
+
+            await uploader.remove(result.banner);
+
             response.success(res, result, 'success remove event')
         } catch (error) {
             response.error(res, error, 'failed remove event')
@@ -124,6 +131,8 @@ export default {
             const { slug } = req.params;
 
             const result = await EventModel.findOne({ slug });
+
+            if (!result) return response.notFound(res, "event not found");
 
             response.success(res, result, 'success find one by slug event')
         } catch (error) {

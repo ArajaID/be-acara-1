@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 
 import * as Yup from 'yup';
 
-import UserModel from '../models/user.model';
+import UserModel, { userUpdatePasswordDTO } from '../models/user.model';
 import { encrypt } from '../utils/encryption';
 import { generateToken } from '../utils/jwt';
 import { IReqUser } from '../utils/interfaces';
@@ -44,6 +44,60 @@ const registerValidateSchema = Yup.object({
 })
 
 export default {
+    async updateProfile(req: IReqUser, res: Response) {
+        try {
+          const userId = req.user?.id;
+          const { fullName, profilePicture } = req.body;
+          const result = await UserModel.findByIdAndUpdate(
+            userId,
+            {
+              fullName,
+              profilePicture,
+            },
+            {
+              new: true,
+            }
+          );
+    
+          if (!result) return response.notFound(res, "user not found");
+    
+          response.success(res, result, "success to update profile");
+        } catch (error) {
+          response.error(res, error, "failed to update profile");
+        }
+    },
+
+    async updatePassword(req: IReqUser, res: Response) {
+        try {
+          const userId = req.user?.id;
+          const { oldPassword, password, confirmPassword } = req.body;
+    
+          await userUpdatePasswordDTO.validate({
+            oldPassword,
+            password,
+            confirmPassword,
+          });
+    
+          const user = await UserModel.findById(userId);
+    
+          if (!user || user.password !== encrypt(oldPassword))
+            return response.notFound(res, "user not found");
+    
+          const result = await UserModel.findByIdAndUpdate(
+            userId,
+            {
+              password: encrypt(password),
+            },
+            {
+              new: true,
+            }
+          );
+          response.success(res, result, "success to update password");
+        } catch (error) {
+          response.error(res, error, "failed to update password");
+        }
+    },
+
     async register (req: Request, res: Response) {
         const { 
             fullName, 

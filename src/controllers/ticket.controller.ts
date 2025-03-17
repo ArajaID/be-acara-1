@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { IPaginationQuery, IReqUser } from "../utils/interfaces";
-import TicketModel, { ticketDAO, TypeTicket } from "../models/ticket.model";
+import TicketModel, { ticketDTO, TypeTicket } from "../models/ticket.model";
 import response from "../utils/response";
 import { FilterQuery, isValidObjectId } from "mongoose";
 
@@ -8,7 +8,7 @@ import { FilterQuery, isValidObjectId } from "mongoose";
 export default {
     async create(req: IReqUser, res: Response) {
         try {
-            await ticketDAO.validate(req.body);
+            await ticketDTO.validate(req.body);
 
             const result = await TicketModel.create(req.body)
 
